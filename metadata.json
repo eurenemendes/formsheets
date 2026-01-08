@@ -1,0 +1,5 @@
+{
+  "name": "Formsheets - EcoFeira Report System",
+  "description": "A professional, minimalist error reporting form designed for iframe integration, featuring automatic data population via postMessage.",
+  "requestFramePermissions": []
+}
