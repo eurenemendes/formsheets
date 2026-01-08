@@ -1,29 +1,188 @@
 
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Formsheets - Reporte de Erros</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formsheets - EcoFeira Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: transparent; /* Essential for iframe transparency */
-      }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent;
+        }
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3"
+    "react": "https://esm.sh/react@^19.2.3",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 </head>
-  <body class="overflow-hidden">
-    <div id="root"></div>
-  </body>
+<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
+
+    <!-- Container Principal -->
+    <div id="main-container" class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 fade-in">
+        
+        <!-- Formulário de Reporte -->
+        <form id="report-form" class="p-6 space-y-4">
+            <header class="mb-6">
+                <h1 class="text-xl font-bold text-gray-800">Reportar Problema</h1>
+                <p id="product-context" class="text-sm text-gray-500">
+                    Algo errado com este item? Informe-nos abaixo.
+                </p>
+            </header>
+
+            <!-- Campos Escondidos (Hidden) -->
+            <input type="hidden" id="userName" name="userName">
+            <input type="hidden" id="userId" name="userId">
+            <input type="hidden" id="itemId" name="itemId">
+            <input type="hidden" id="itemUrl" name="itemUrl">
+            <input type="hidden" id="productName" name="productName">
+            <input type="hidden" id="supermarket" name="supermarket">
+
+            <!-- Campo Visível -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                    Descrição do Erro
+                </label>
+                <textarea
+                    id="description"
+                    required
+                    placeholder="Ex: Preço incorreto, produto fora de estoque..."
+                    rows="4"
+                    class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-sm resize-none"
+                ></textarea>
+            </div>
+
+            <button
+                type="submit"
+                id="submit-btn"
+                class="w-full py-3 px-4 rounded-xl font-semibold text-white bg-[#10b981] hover:bg-emerald-600 active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+            >
+                <span id="btn-text">Enviar Reporte</span>
+                <div id="btn-loader" class="loading-spinner hidden"></div>
+            </button>
+
+            <footer class="pt-2 text-center">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+                    Powered by Formsheets
+                </p>
+            </footer>
+        </form>
+
+        <!-- Mensagem de Sucesso (Oculta inicialmente) -->
+        <div id="success-screen" class="hidden p-10 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Obrigado!</h2>
+            <p class="text-gray-600 mb-8 leading-relaxed">
+                Seu reporte foi enviado com sucesso. Nossa equipe analisará a informação em breve.
+            </p>
+            <button 
+                onclick="window.location.reload()"
+                class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+            >
+                Enviar outro reporte
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Elementos do DOM
+        const form = document.getElementById('report-form');
+        const successScreen = document.getElementById('success-screen');
+        const submitBtn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnLoader = document.getElementById('btn-loader');
+        const productContext = document.getElementById('product-context');
+
+        // 1. Sistema de Escuta (Ouvir o Site Pai EcoFeira)
+        window.addEventListener('message', function(event) {
+            const data = event.data;
+            
+            if (data && data.type === 'ECOFEIRA_REPORT_DATA') {
+                console.log("Formsheets: Dados recebidos!", data);
+                
+                // Preencher campos ocultos
+                if (data.userName) document.getElementById('userName').value = data.userName;
+                if (data.userId) document.getElementById('userId').value = data.userId;
+                if (data.itemId) document.getElementById('itemId').value = data.itemId;
+                if (data.itemUrl) document.getElementById('itemUrl').value = data.itemUrl;
+                if (data.productName) document.getElementById('productName').value = data.productName;
+                if (data.supermarket) document.getElementById('supermarket').value = data.supermarket;
+
+                // Atualizar contexto visual para o usuário
+                if (data.productName) {
+                    productContext.innerHTML = `Encontrou algo errado com <span class="text-emerald-600 font-semibold">${data.productName}</span>?`;
+                }
+            }
+        });
+
+        // Notificar o pai que o iframe está pronto
+        window.parent.postMessage({ type: 'FORMSHEETS_READY' }, '*');
+
+        // 2. Lógica de Envio
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const description = document.getElementById('description').value;
+            if (!description.trim()) return;
+
+            // Interface em estado de carregamento
+            submitBtn.disabled = true;
+            btnText.textContent = "Enviando...";
+            btnLoader.classList.remove('hidden');
+
+            // Coleta todos os dados (Visíveis + Ocultos)
+            const formData = {
+                description: description,
+                userName: document.getElementById('userName').value,
+                userId: document.getElementById('userId').value,
+                itemId: document.getElementById('itemId').value,
+                itemUrl: document.getElementById('itemUrl').value,
+                productName: document.getElementById('productName').value,
+                supermarket: document.getElementById('supermarket').value,
+                timestamp: new Date().toISOString()
+            };
+
+            console.log("Simulando envio de dados:", formData);
+
+            // Simulação de delay de rede (1.5s)
+            setTimeout(() => {
+                // Trocar telas
+                form.classList.add('hidden');
+                successScreen.classList.remove('hidden');
+                
+                // Notificar site pai do sucesso
+                window.parent.postMessage({ type: 'FORMSHEETS_SUBMIT_SUCCESS' }, '*');
+            }, 1500);
+        });
+    </script>
+</body>
 </html>

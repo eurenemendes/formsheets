@@ -1,16 +1,3 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Este arquivo foi substituído pelo script inline no index.html 
+// para seguir o requisito de Vanilla JS e garantir que funcione no Vercel.
